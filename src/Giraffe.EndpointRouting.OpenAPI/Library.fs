@@ -1,56 +1,54 @@
-namespace Giraffe.EndpointRouting.OpenAPI
-open System
-open System.Security.Cryptography
-open System.Text
+#if INTERACTIVE
+#r "nuget: Giraffe"
+#I "/usr/local/share/dotnet/packs/Microsoft.AspNetCore.App.Ref/5.0.0/ref/net5.0/"
+#r "Microsoft.AspNetCore.Html.Abstractions.dll"
+#r "Microsoft.AspNetCore.Routing.dll"
+#endif
 
-/// <summary> Initial module </summary>
-module Say =
+#if !INTERACTIVE
+module Giraffe.EndpointRouting.OpenAPI
+#endif
 
-    /// <summary> Finite list of Colors </summary>
-    type FavoriteColor =
-    | Red
-    | Yellow
-    | Blue
+open Giraffe
+open Giraffe.EndpointRouting
+open Microsoft.AspNetCore.Routing
+open System.Runtime.CompilerServices
 
-    /// <summary> A person with many different field types </summary>
-    type Person = {
-        Name : string
-        FavoriteNumber : int
-        FavoriteColor : FavoriteColor
-        DateOfBirth : DateTimeOffset
-    }
+type Metadata = obj
+type MetadataList = obj list
 
-    /// <summary>Says hello to a specific person</summary>
-    let helloPerson (person : Person) =
-        sprintf
-            "Hello %s. You were born on %s and your favorite number is %d. You like %A."
-            person.Name
-            (person.DateOfBirth.ToString("yyyy/MM/dd"))
-            person.FavoriteNumber
-            person.FavoriteColor
+/// Represents a handler that contains associated endpoint metadata.
+/// When processed, the metadata is added to the generated Endpoint
+type SwaggerHttpHandler = SwaggerHttpHandler of metadata: MetadataList * handler: HttpHandler
 
-    /// <summary>
-    /// Adds two integers <paramref name="a"/> and <paramref name="b"/> and returns the result.
-    /// </summary>
-    ///
-    /// <remarks>
-    /// This usually contains some really important information that you'll miss if you don't read the docs.
-    /// </remarks>
-    ///
-    /// <param name="a">An integer.</param>
-    /// <param name="b">An integer.</param>
-    ///
-    /// <returns>
-    /// The sum of two integers.
-    /// </returns>
-    ///
-    /// <exceptions cref="M:System.OverflowException">Thrown when one parameter is max
-    /// and the other is greater than 0.</exceptions>
-    let add a b =
-        a + b
+/// represents a endpoint with additional swagger metadata (eg what we want to return out of `GET` combinators, etc)
+type SwaggerEndpoint = SwaggerEndpoint of metadata: MetadataList * endpoint: Routers.Endpoint
+
+// helper type to make it seamless to weave in swagger-enabled endpoints into your existing pipelines
+type Composer =
+    static member inline Compose (SwaggerHttpHandler(lmetadata, lhandler), (SwaggerHttpHandler(rmetadata, rhandler))): SwaggerHttpHandler =
+        SwaggerHttpHandler(lmetadata @ rmetadata, Giraffe.Core.compose lhandler rhandler)
+    static member inline Compose (SwaggerHttpHandler(lmetadata, lhandler), rhandler: HttpHandler): SwaggerHttpHandler =
+        SwaggerHttpHandler(lmetadata, Giraffe.Core.compose lhandler rhandler)
+    static member inline Compose (lhandler: HttpHandler, SwaggerHttpHandler(rmetadata, rhandler)): SwaggerHttpHandler =
+        SwaggerHttpHandler(rmetadata, Giraffe.Core.compose lhandler rhandler)
+    static member inline Compose (lhandler: HttpHandler, rhandler: HttpHandler): SwaggerHttpHandler =
+        SwaggerHttpHandler([], Giraffe.Core.compose lhandler rhandler)
+
+let inline (>=>) (l: ^l) (r: ^r) =
+    let inline call (_mthd: 'M, input: 'I, _output: 'R, f) = ((^M or ^I or ^R) : (static member Compose : _*_ -> _) input, f)
+    call (Unchecked.defaultof<Composer>, l, Unchecked.defaultof<SwaggerHttpHandler>, r)
 
 
-    /// I do nothing
-    let nothing name =
-        name |> ignore
+[<Extension>]
+type EndpointRouteBuilderExtensions() =
+    [<Extension>]
+    static member MapGiraffeEndpoints
+        (builder  : IEndpointRouteBuilder,
+        endpoints : SwaggerEndpoint list) =
 
+        let mappedEndpoints =
+            endpoints
+            |> List.map(fun (SwaggerEndpoint(metadata, endpoint)) -> (endpoint, metadata) ||> List.fold (fun e m -> addMetadata m e))
+
+        builder.MapGiraffeEndpoints(mappedEndpoints)

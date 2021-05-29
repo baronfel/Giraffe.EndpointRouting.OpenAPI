@@ -510,7 +510,7 @@ let generateAssemblyInfo _ =
             AssemblyInfo.Metadata("GitHash", Git.Information.getCurrentSHA1(null))
         ]
 
-    let getProjectDetails projectPath =
+    let getProjectDetails (projectPath: string) =
         let projectName = IO.Path.GetFileNameWithoutExtension(projectPath)
         (
             projectPath,

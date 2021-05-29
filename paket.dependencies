@@ -7,6 +7,10 @@ nuget Expecto 9.0.2
 nuget YoloDev.Expecto.TestSdk 0.11.1
 nuget Microsoft.NET.Test.Sdk 16.8.0
 nuget altcover ~> 7
+nuget Giraffe
+nuget Giraffe.ViewEngine
+nuget Microsoft.OpenApi
+nuget Microsoft.OpenApi.Readers
 
 // [ FAKE GROUP ]
 group Build
