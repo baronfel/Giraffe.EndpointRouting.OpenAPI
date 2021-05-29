@@ -19,10 +19,8 @@ type MetadataList = obj list
 
 /// Represents a handler that contains associated endpoint metadata.
 /// When processed, the metadata is added to the generated Endpoint
-type SwaggerHttpHandler = SwaggerHttpHandler of metadata: MetadataList * handler: HttpHandler
-
-/// represents a endpoint with additional swagger metadata (eg what we want to return out of `GET` combinators, etc)
-type SwaggerEndpoint = SwaggerEndpoint of metadata: MetadataList * endpoint: Routers.Endpoint
+type SwaggerHttpHandler =
+    | SwaggerHttpHandler of metadata: MetadataList * handler: HttpHandler
 
 // helper type to make it seamless to weave in swagger-enabled endpoints into your existing pipelines
 type Composer =
@@ -37,18 +35,22 @@ type Composer =
 
 let inline (>=>) (l: ^l) (r: ^r) =
     let inline call (_mthd: 'M, input: 'I, _output: 'R, f) = ((^M or ^I or ^R) : (static member Compose : _*_ -> _) input, f)
-    call (Unchecked.defaultof<Composer>, l, Unchecked.defaultof<SwaggerHttpHandler>, r)
+    call (Unchecked.defaultof<Composer>, l, Unchecked.defaultof< ^R >, r)
 
+[<AutoOpen>]
+module Combinators =
+    let private applyMetadatas metadata endpoint =
+        (endpoint, metadata)
+        ||> List.fold (fun e m -> addMetadata m e)
 
-[<Extension>]
-type EndpointRouteBuilderExtensions() =
-    [<Extension>]
-    static member MapGiraffeEndpoints
-        (builder  : IEndpointRouteBuilder,
-        endpoints : SwaggerEndpoint list) =
+    let route path ((SwaggerHttpHandler(metadata, handler))) =
+        Giraffe.EndpointRouting.Routers.route path handler
+        |> applyMetadatas metadata
 
-        let mappedEndpoints =
-            endpoints
-            |> List.map(fun (SwaggerEndpoint(metadata, endpoint)) -> (endpoint, metadata) ||> List.fold (fun e m -> addMetadata m e))
+    let applyBefore (SwaggerHttpHandler(metadata, handler)) endpoint =
+        Giraffe.EndpointRouting.Routers.applyBefore handler endpoint
+        |> applyMetadatas metadata
 
-        builder.MapGiraffeEndpoints(mappedEndpoints)
+    let applyAfter (SwaggerHttpHandler(metadata, handler)) endpoint =
+        Giraffe.EndpointRouting.Routers.applyAfter handler endpoint
+        |> applyMetadatas metadata
