@@ -39,18 +39,37 @@ let inline (>=>) (l: ^l) (r: ^r) =
 
 [<AutoOpen>]
 module Combinators =
-    let private applyMetadatas metadata endpoint =
+    let applyMetadatas metadata endpoint =
         (endpoint, metadata)
         ||> List.fold (fun e m -> addMetadata m e)
 
-    let route path ((SwaggerHttpHandler(metadata, handler))) =
-        Giraffe.EndpointRouting.Routers.route path handler
-        |> applyMetadatas metadata
+    type Router =
+        static member inline Route (path, SwaggerHttpHandler(metadata, handler)): Endpoint =
+            Giraffe.EndpointRouting.Routers.route path handler
+            |> applyMetadatas metadata
+        static member inline Route (path, handler): Endpoint =
+            Giraffe.EndpointRouting.Routers.route path handler
 
-    let applyBefore (SwaggerHttpHandler(metadata, handler)) endpoint =
-        Giraffe.EndpointRouting.Routers.applyBefore handler endpoint
-        |> applyMetadatas metadata
+        static member ApplyBefore (SwaggerHttpHandler(metadata, handler), endpoint): Endpoint =
+            Giraffe.EndpointRouting.Routers.applyBefore handler endpoint
+            |> applyMetadatas metadata
+        static member ApplyBefore (handler, endpoint): Endpoint =
+            Giraffe.EndpointRouting.Routers.applyBefore handler endpoint
 
-    let applyAfter (SwaggerHttpHandler(metadata, handler)) endpoint =
-        Giraffe.EndpointRouting.Routers.applyAfter handler endpoint
-        |> applyMetadatas metadata
+        static member ApplyAfter (SwaggerHttpHandler(metadata, handler), endpoint): Endpoint =
+            Giraffe.EndpointRouting.Routers.applyAfter handler endpoint
+            |> applyMetadatas metadata
+        static member ApplyAfter (handler, endpoint): Endpoint =
+            Giraffe.EndpointRouting.Routers.applyAfter handler endpoint
+
+    let inline route path (handler: ^h): Endpoint =
+        let inline call (_mthd: 'M, path: string, dummy: 'D, handler: 'R) = ((^M or ^R or ^D) : (static member Route: string * ^R -> ^D) path, handler)
+        call (Unchecked.defaultof<Router>, path, Unchecked.defaultof<Endpoint>, handler)
+
+    let inline applyBefore (handler: ^h) endpoint: Endpoint =
+        let inline call (_mthd: 'M, handler: 'h, dummy: 'D, endpoint: 'R) = ((^M or ^R or ^d) : (static member ApplyBefore: ^h * ^R -> ^R) handler, endpoint)
+        call (Unchecked.defaultof<Router>, handler, Unchecked.defaultof<Endpoint>, endpoint)
+
+    let inline applyAfter (handler: ^h) endpoint =
+        let inline call (_mthd: 'M, handler: 'h, dummy: 'D, endpoint: 'R) = ((^M or ^R or ^d) : (static member ApplyAfter: ^h * ^R -> ^R) handler, endpoint)
+        call (Unchecked.defaultof<Router>, handler, Unchecked.defaultof<Endpoint>, endpoint)

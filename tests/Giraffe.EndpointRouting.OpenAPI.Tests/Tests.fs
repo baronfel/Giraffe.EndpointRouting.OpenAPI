@@ -22,6 +22,22 @@ module CompositionTests =
                     // example swagger handler that'd add metadata to a chain
                     Expect.equal metadata [box "name"] "should have the name"
                 | other -> failtestf "should have been a simple endpoint"
+            testCase "can still use giraffe handlers bare" <| fun _ ->
+                match route "" (text "farts") with
+                | Routers.SimpleEndpoint(_, _, _, metadata) ->
+                    Expect.equal metadata [] "should have no metadata"
+                | other -> failtestf "should have been a simple endpoint"
+            testCase "can applybefore with normal giraffe" <| fun _ ->
+                match route "" (text "farts") |> applyBefore (requiresAuthentication (text "nope")) with
+                | Routers.SimpleEndpoint(_, _, _, metadata) ->
+                    Expect.equal metadata [] "should have no metadata"
+                | other -> failtestf "should have been a simple endpoint"
+            testCase "can applybefore with fancy endpoints" <| fun _ ->
+                match route "" (text "farts") |> applyBefore withName with
+                | Routers.SimpleEndpoint(_, _, _, metadata) ->
+                    // example swagger handler that'd add metadata to a chain
+                    Expect.equal metadata [box "name"] "should have one metadata"
+                | other -> failtestf "should have been a simple endpoint"
             testCase "endpoint registration" <| fun _ ->
                 let builder =
                     let sources = ResizeArray()
