@@ -6,6 +6,20 @@
     "configurations": [
         {
             "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/sample/OpenAPI.Sample/bin/Debug/net5.0/OpenAPI.Sample.dll",
+            "cwd": "${workspaceFolder}/sample/OpenAPI.Sample",
+            "name": "Launch",
+            "justMyCode": false,
+            "enableStepFiltering": false,
+            "sourceLinkOptions": {
+                "*": {
+                    "enabled": true
+                }
+            }
+        },
+        {
+            "type": "coreclr",
             "request": "attach",
             "processId": "${command:pickProcess}",
             "name": "Attach"

@@ -45,6 +45,7 @@ module Metadata =
       |> Option.ofObj
       |> Option.toList
       |> Seq.collect id
+      |> Seq.distinct
       |> Seq.iteri
            (fun index (parameter: OperationParameter) ->
              let openApiParameter = OpenApiParameter()
