@@ -1,4 +1,5 @@
 {
+    "editor.minimap.enabled": false,
     "FSharp.fsacRuntime":"netcore",
     "FSharp.enableAnalyzers": true,
     "FSharp.analyzersPath": [

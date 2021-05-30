@@ -15,6 +15,7 @@ indent_size = 4
 [*.{fs,fsi,fsx,config}]
 charset = utf-8
 trim_trailing_whitespace = true
+indent_size = 2
 
 [paket.*]
 trim_trailing_whitespace = true

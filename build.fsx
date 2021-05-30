@@ -485,49 +485,6 @@ let watchTests _ =
     let cancelEvent = Console.CancelKeyPress |> Async.AwaitEvent |> Async.RunSynchronously
     cancelEvent.Cancel <- true
 
-let generateAssemblyInfo _ =
-
-    let (|Fsproj|Csproj|Vbproj|) (projFileName:string) =
-        match projFileName with
-        | f when f.EndsWith("fsproj") -> Fsproj
-        | f when f.EndsWith("csproj") -> Csproj
-        | f when f.EndsWith("vbproj") -> Vbproj
-        | _                           -> failwith (sprintf "Project file %s not supported. Unknown project type." projFileName)
-
-    let releaseChannel =
-        match latestEntry.SemVer.PreRelease with
-        | Some pr -> pr.Name
-        | _ -> "release"
-    let getAssemblyInfoAttributes projectName =
-        [
-            AssemblyInfo.Title (projectName)
-            AssemblyInfo.Product productName
-            AssemblyInfo.Version latestEntry.AssemblyVersion
-            AssemblyInfo.Metadata("ReleaseDate", latestEntry.Date.Value.ToString("o"))
-            AssemblyInfo.FileVersion latestEntry.AssemblyVersion
-            AssemblyInfo.InformationalVersion latestEntry.AssemblyVersion
-            AssemblyInfo.Metadata("ReleaseChannel", releaseChannel)
-            AssemblyInfo.Metadata("GitHash", Git.Information.getCurrentSHA1(null))
-        ]
-
-    let getProjectDetails (projectPath: string) =
-        let projectName = IO.Path.GetFileNameWithoutExtension(projectPath)
-        (
-            projectPath,
-            projectName,
-            IO.Path.GetDirectoryName(projectPath),
-            (getAssemblyInfoAttributes projectName)
-        )
-
-    srcAndTest
-    |> Seq.map getProjectDetails
-    |> Seq.iter (fun (projFileName, _, folderName, attributes) ->
-        match projFileName with
-        | Fsproj -> AssemblyInfoFile.createFSharp (folderName @@ "AssemblyInfo.fs") attributes
-        | Csproj -> AssemblyInfoFile.createCSharp ((folderName @@ "Properties") @@ "AssemblyInfo.cs") attributes
-        | Vbproj -> AssemblyInfoFile.createVisualBasic ((folderName @@ "My Project") @@ "AssemblyInfo.vb") attributes
-        )
-
 let dotnetPack ctx =
     // Get release notes with properly-linked version number
     let releaseNotes = latestEntry |> Changelog.mkReleaseNotes linkReferenceForLatestEntry
@@ -574,9 +531,6 @@ let gitRelease _ =
     Git.Staging.stageFile "" "CHANGELOG.md"
         |> ignore
 
-    !! "src/**/AssemblyInfo.fs"
-        |> Seq.iter (Git.Staging.stageFile "" >> ignore)
-
     Git.Commit.exec "" (sprintf "Bump version to %s\n\n%s" latestEntry.NuGetVersion releaseNotesGitCommitFormat)
     Git.Branches.push ""
 
@@ -608,8 +562,6 @@ let formatCode _ =
         testsCodeGlob
     ]
     |> Seq.collect id
-    // Ignore AssemblyInfo
-    |> Seq.filter(fun f -> f.EndsWith("AssemblyInfo.fs") |> not)
     |> formatFilesAsync FormatConfig.FormatConfig.Default
     |> Async.RunSynchronously
     |> Seq.iter(fun result ->
@@ -652,7 +604,6 @@ Target.create "FSharpAnalyzers" fsharpAnalyzers
 Target.create "DotnetTest" dotnetTest
 Target.create "GenerateCoverageReport" generateCoverageReport
 Target.create "WatchTests" watchTests
-Target.create "GenerateAssemblyInfo" generateAssemblyInfo
 Target.create "DotnetPack" dotnetPack
 Target.create "SourceLinkTest" sourceLinkTest
 Target.create "PublishToNuGet" publishToNuget
@@ -673,12 +624,6 @@ Target.create "ReleaseDocs" releaseDocs
 // Ensure Clean is called before DotnetRestore
 "Clean" ?=> "DotnetRestore"
 "Clean" ==> "DotnetPack"
-
-// Only call GenerateAssemblyInfo if Publish was in the call chain
-// Ensure GenerateAssemblyInfo is called after DotnetRestore and before DotnetBuild
-"DotnetRestore" ?=> "GenerateAssemblyInfo"
-"GenerateAssemblyInfo" ?=> "DotnetBuild"
-"GenerateAssemblyInfo" ==> "PublishToNuGet"
 
 // Only call UpdateChangelog if Publish was in the call chain
 // Ensure UpdateChangelog is called after DotnetRestore and before GenerateAssemblyInfo

@@ -2,19 +2,19 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
   </PropertyGroup>
+  
   <PropertyGroup>
     <Title>Giraffe.EndpointRouting.OpenAPI</Title>
     <Description>Giraffe.EndpointRouting.OpenAPI does the thing!</Description>
+  </PropertyGroup>
 
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Release'">
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    
-  </PropertyGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Composition.fs" />
+    <Compile Include="Metadata.fs" />
+    <Compile Include="Extensions.fs" />
+    <Compile Include="Combinators.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
