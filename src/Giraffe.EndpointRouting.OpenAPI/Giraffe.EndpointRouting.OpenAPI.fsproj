@@ -2,7 +2,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <OutputType>Library</OutputType>
     <IsPackable>true</IsPackable>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -10,7 +9,7 @@
   
   <PropertyGroup>
     <Title>Giraffe.EndpointRouting.OpenAPI</Title>
-    <Description>Giraffe.EndpointRouting.OpenAPI does the thing!</Description>
+    <Description>Giraffe.EndpointRouting.OpenAPI integrates OpenAPI schema definitions with Giraffe applications through shadowing existing Giraffe primitives</Description>
   </PropertyGroup>
 
   <ItemGroup>

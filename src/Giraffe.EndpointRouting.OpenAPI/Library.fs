@@ -21,13 +21,15 @@ module PublicApi =
 
     call (Unchecked.defaultof<Router>, path, Unchecked.defaultof<Endpoint>, handler)
 
-  // let inline applyBefore (handler: ^h) endpoint: Endpoint =
-  //     let inline call (_mthd: 'M, handler: 'h, dummy: 'D, endpoint: 'R) = ((^M or ^R or ^d) : (static member ApplyBefore: ^h * ^R -> ^R) handler, endpoint)
-  //     call (Unchecked.defaultof<Router>, handler, Unchecked.defaultof<Endpoint>, endpoint)
+  let inline applyBefore (handler: ^h) endpoint : Endpoint =
+    let inline call (_mthd: 'M, handler: 'H, dummy: 'D, endpoint: 'R) =
+      ((^M or ^R or ^D or ^H): (static member ApplyBefore : ^H * ^R -> ^R) handler, endpoint)
 
-  // let inline applyAfter (handler: ^h) endpoint =
-  //     let inline call (_mthd: 'M, handler: 'h, dummy: 'D, endpoint: 'R) = ((^M or ^R or ^d) : (static member ApplyAfter: ^h * ^R -> ^R) handler, endpoint)
-  //     call (Unchecked.defaultof<Router>, handler, Unchecked.defaultof<Endpoint>, endpoint)
+    call (Unchecked.defaultof<Router>, handler, Unchecked.defaultof<Endpoint>, endpoint)
+
+  let inline applyAfter (handler: ^h) endpoint =
+      let inline call (_mthd: 'M, handler: 'H, dummy: 'D, endpoint: 'R) = ((^M or ^R or ^D or ^H) : (static member ApplyAfter: ^H * ^R -> ^R) handler, endpoint)
+      call (Unchecked.defaultof<Router>, handler, Unchecked.defaultof<Endpoint>, endpoint)
 
   /// assigns an operation id to this handler
   let operationId id =

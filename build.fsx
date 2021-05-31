@@ -55,6 +55,7 @@ let testsCodeGlob =
 
 let srcGlob =__SOURCE_DIRECTORY__  @@ "src/**/*.??proj"
 let testsGlob = __SOURCE_DIRECTORY__  @@ "tests/**/*.??proj"
+let samplesGlob = __SOURCE_DIRECTORY__  @@ "sample/**/*.??proj"
 
 let srcAndTest =
     !! srcGlob
@@ -63,7 +64,7 @@ let srcAndTest =
 let distDir = __SOURCE_DIRECTORY__  @@ "dist"
 let distGlob = distDir @@ "*.nupkg"
 
-let coverageThresholdPercent = 80
+let coverageThresholdPercent = 70
 let coverageReportDir =  __SOURCE_DIRECTORY__  @@ "docs" @@ "coverage"
 
 
@@ -93,7 +94,7 @@ let publishUrl = "https://www.nuget.org"
 
 let docsSiteBaseUrl = sprintf "https://%s.github.io/%s" gitOwner gitRepoName
 
-let disableCodeCoverage = environVarAsBoolOrDefault "DISABLE_COVERAGE" false
+let disableCodeCoverage = environVarAsBoolOrDefault "DISABLE_COVERAGE" true
 
 let githubToken = Environment.environVarOrNone "GITHUB_TOKEN"
 Option.iter(TraceSecrets.register "<GITHUB_TOKEN>" )
@@ -293,6 +294,7 @@ let clean _ =
 
     !! srcGlob
     ++ testsGlob
+    ++ samplesGlob
     |> Seq.collect(fun p ->
         ["bin";"obj"]
         |> Seq.map(fun sp -> IO.Path.GetDirectoryName p @@ sp ))
@@ -427,6 +429,7 @@ let fsharpAnalyzers _ =
 let dotnetTest ctx =
     let excludeCoverage =
         !! testsGlob
+        ++ samplesGlob
         |> Seq.map IO.Path.GetFileNameWithoutExtension
         |> String.concat "|"
     let args =
@@ -628,7 +631,6 @@ Target.create "ReleaseDocs" releaseDocs
 // Only call UpdateChangelog if Publish was in the call chain
 // Ensure UpdateChangelog is called after DotnetRestore and before GenerateAssemblyInfo
 "DotnetRestore" ?=> "UpdateChangelog"
-"UpdateChangelog" ?=> "GenerateAssemblyInfo"
 "UpdateChangelog" ==> "PublishToNuGet"
 
 "BuildDocs" ==> "ReleaseDocs"

@@ -28,19 +28,33 @@ module CompositionTests =
                   | Routers.SimpleEndpoint (_, _, _, metadata) -> Expect.equal metadata [] "should have no metadata"
                   | other -> failtestf "should have been a simple endpoint"
               }
-            //   test "can applybefore with normal giraffe" {
-            //       match route "" (text "farts")
-            //             |> applyBefore (requiresAuthentication (text "nope")) with
-            //       | Routers.SimpleEndpoint (_, _, _, metadata) -> Expect.equal metadata [] "should have no metadata"
-            //       | other -> failtestf "should have been a simple endpoint"
-            //   }
-            //   test "can applybefore with fancy endpoints" {
-            //       match route "" (text "farts") |> applyBefore withName with
-            //       | Routers.SimpleEndpoint (_, _, _, metadata) ->
-            //           // example swagger handler that'd add metadata to a chain
-            //           Expect.equal metadata [ box "name" ] "should have one metadata"
-            //       | other -> failtestf "should have been a simple endpoint"
-            //   }
+              test "can applybefore with normal giraffe" {
+                  match route "" (text "farts")
+                        |> applyBefore (requiresAuthentication (text "nope")) with
+                  | Routers.SimpleEndpoint (_, _, _, metadata) -> Expect.equal metadata [] "should have no metadata"
+                  | other -> failtestf "should have been a simple endpoint"
+              }
+              test "can applybefore with fancy endpoints" {
+                  match route "" (text "farts") |> applyBefore (operationId "name") with
+                  | Routers.SimpleEndpoint (_, _, _, [metadata]) ->
+                      // example swagger handler that'd add metadata to a chain
+                      Expect.equal (metadata :?> Metadata.OperationIdMetadata).Id "name" "should have one metadata"
+                  | other -> failtestf "should have been a simple endpoint"
+              }
+
+              test "can applyafter with normal giraffe" {
+                  match route "" (text "farts")
+                        |> applyAfter (requiresAuthentication (text "nope")) with
+                  | Routers.SimpleEndpoint (_, _, _, metadata) -> Expect.equal metadata [] "should have no metadata"
+                  | other -> failtestf "should have been a simple endpoint"
+              }
+              test "can applyafter with fancy endpoints" {
+                  match route "" (text "farts") |> applyAfter (operationId "name") with
+                  | Routers.SimpleEndpoint (_, _, _, [metadata]) ->
+                      // example swagger handler that'd add metadata to a chain
+                      Expect.equal (metadata :?> Metadata.OperationIdMetadata).Id "name" "should have one metadata"
+                  | other -> failtestf "should have been a simple endpoint"
+              }
               test "endpoint registration" {
                   let builder =
                       let sources = ResizeArray()
