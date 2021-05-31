@@ -16,6 +16,12 @@ indent_size = 4
 charset = utf-8
 trim_trailing_whitespace = true
 indent_size = 2
+fsharp_max_array_or_list_width=120
+fsharp_max_if_then_else_short_width=120
+fsharp_max_infix_operator_expression=100
+fsharp_max_record_width=120
+max_line_length=120
+fsharp_multi_line_lambda_closing_newline=true
 
 [paket.*]
 trim_trailing_whitespace = true
