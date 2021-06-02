@@ -1,6 +1,12 @@
 # Giraffe.EndpointRouting.OpenAPI
 
-[Enter useful description for Giraffe.EndpointRouting.OpenAPI]
+This library integrates [OpenAPI 3](https://swagger.io/specification/) generation into the [Giraffe](https://github.com/giraffe-fsharp/Giraffe/) Endpoint Routing programming model.
+
+It is designed as a series of shadowed bindings that take the existing names for Giraffe HttpHandler combinators and augments them with OpenAPI metadata.
+
+A component is registered that knows how to interpret those pieces of metadata and transforms them into an OpenAPI description document.
+
+For usage examples, check the OpenAPI.Sample project in the samples directory.
 
 ---
 
@@ -23,8 +29,7 @@ Giraffe.EndpointRouting.OpenAPI | [![NuGet Badge](https://buildstats.info/nuget/
 
 Make sure the following **requirements** are installed on your system:
 
-- [dotnet SDK](https://www.microsoft.com/net/download/core) 3.0 or higher
-- [Mono](http://www.mono-project.com/) if you're on Linux or macOS.
+- [dotnet SDK](https://www.microsoft.com/net/download/core) 5.0.300 or higher
 
 or
 
