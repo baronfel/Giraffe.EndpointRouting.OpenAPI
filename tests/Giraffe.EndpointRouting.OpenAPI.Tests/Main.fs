@@ -2,8 +2,8 @@ namespace Giraffe.EndpointRouting.OpenAPI.Tests
 
 module ExpectoTemplate =
 
-    open Expecto
+  open Expecto
 
-    [<EntryPoint>]
-    let main argv =
-        Tests.runTestsInAssembly defaultConfig argv
+  [<EntryPoint>]
+  let main argv =
+    Tests.runTestsInAssembly defaultConfig argv

@@ -28,13 +28,12 @@ module Metadata =
       end
 
     let tryGetOperationId (e: Microsoft.AspNetCore.Http.Endpoint) operationType =
-      match e.Metadata.GetMetadata<OperationIdMetadata>()
-            |> Option.ofObj with
+      match e.Metadata.GetMetadata<OperationIdMetadata>() |> Option.ofObj with
       | Some op -> op.Id
       | None ->
-          let route = (e :?> RouteEndpoint)
-          let pattern = route.RoutePattern.RawText
-          $"{pattern}_%A{operationType}"
+        let route = (e :?> RouteEndpoint)
+        let pattern = route.RoutePattern.RawText
+        $"{pattern}_%A{operationType}"
 
 
     let generateOperation (e: Microsoft.AspNetCore.Http.Endpoint) (method: OperationType) =
@@ -46,16 +45,14 @@ module Metadata =
       |> Option.toList
       |> Seq.collect id
       |> Seq.distinct
-      |> Seq.iteri
-           (fun index (parameter: OperationParameter) ->
-             let openApiParameter = OpenApiParameter()
-             openApiParameter.Name <- string index
+      |> Seq.iteri (fun index (parameter: OperationParameter) ->
+        let openApiParameter = OpenApiParameter()
+        openApiParameter.Name <- string index
 
-             openApiParameter.Required <-
-               parameter.Type.GetGenericTypeDefinition()
-               <> typedefof<_ option>
-             // openApiParameter.Schema <- calculateSchema parameter.Type
-             op.Parameters.Add(openApiParameter))
+        openApiParameter.Required <- parameter.Type.GetGenericTypeDefinition() <> typedefof<_ option>
+        // openApiParameter.Schema <- calculateSchema parameter.Type
+        op.Parameters.Add(openApiParameter)
+      )
 
       op.OperationId <- operationId
       op
@@ -80,23 +77,21 @@ module Metadata =
         |> Seq.distinct
         |> Seq.toList
         |> function
-        | [] ->
+          | [] ->
             OperationType.GetValues()
-            |> Array.iter
-                 (fun method ->
-                   let operation = generateOperation endpoint method
-                   pathItem.AddOperation(method, operation))
-        | methods ->
+            |> Array.iter (fun method ->
+              let operation = generateOperation endpoint method
+              pathItem.AddOperation(method, operation)
+            )
+          | methods ->
             let operationTypes =
-              methods
-              |> List.toArray
-              |> Array.map methodToOperationType
+              methods |> List.toArray |> Array.map methodToOperationType
 
             operationTypes
-            |> Array.iter
-                 (fun method ->
-                   let operation = generateOperation endpoint method
-                   pathItem.AddOperation(method, operation))
+            |> Array.iter (fun method ->
+              let operation = generateOperation endpoint method
+              pathItem.AddOperation(method, operation)
+            )
 
       pathItem
 
@@ -112,11 +107,7 @@ module Metadata =
 
       paths
 
-    type OpenApiDocumentBuilder
-      (
-        options: OpenApiDocumentOptions,
-        endpoints: Microsoft.AspNetCore.Routing.EndpointDataSource
-      ) =
+    type OpenApiDocumentBuilder(options: OpenApiDocumentOptions, endpoints: Microsoft.AspNetCore.Routing.EndpointDataSource) =
       member _.CreateDocument() : Microsoft.OpenApi.Models.OpenApiDocument =
         let endpoints = endpoints.Endpoints
         let paths = processEndpoints endpoints

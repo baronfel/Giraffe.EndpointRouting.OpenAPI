@@ -13,16 +13,22 @@ module Composition =
   /// When processed, the metadata is added to the generated Endpoint
   /// This is mostly here because it's helpful to have a type to bind things to,
   /// and because we erase this during Endpoint-generation anyway.
-  type SwaggerHttpHandler =
-      | SwaggerHttpHandler of metadata: MetadataList * handler: HttpHandler
+  type SwaggerHttpHandler = SwaggerHttpHandler of metadata: MetadataList * handler: HttpHandler
 
   // helper type to make it seamless to weave in swagger-enabled endpoints into your existing pipelines
   type Composer =
-      static member inline Compose (SwaggerHttpHandler(lmetadata, lhandler), (SwaggerHttpHandler(rmetadata, rhandler))): SwaggerHttpHandler =
-          SwaggerHttpHandler(lmetadata @ rmetadata, Giraffe.Core.compose lhandler rhandler)
-      static member inline Compose (SwaggerHttpHandler(lmetadata, lhandler), rhandler: HttpHandler): SwaggerHttpHandler =
-          SwaggerHttpHandler(lmetadata, Giraffe.Core.compose lhandler rhandler)
-      static member inline Compose (lhandler: HttpHandler, SwaggerHttpHandler(rmetadata, rhandler)): SwaggerHttpHandler =
-          SwaggerHttpHandler(rmetadata, Giraffe.Core.compose lhandler rhandler)
-      static member inline Compose (lhandler: HttpHandler, rhandler: HttpHandler): SwaggerHttpHandler =
-          SwaggerHttpHandler([], Giraffe.Core.compose lhandler rhandler)
+    static member inline Compose
+      (
+        SwaggerHttpHandler (lmetadata, lhandler),
+        (SwaggerHttpHandler (rmetadata, rhandler))
+      ) : SwaggerHttpHandler =
+      SwaggerHttpHandler(lmetadata @ rmetadata, Giraffe.Core.compose lhandler rhandler)
+
+    static member inline Compose(SwaggerHttpHandler (lmetadata, lhandler), rhandler: HttpHandler) : SwaggerHttpHandler =
+      SwaggerHttpHandler(lmetadata, Giraffe.Core.compose lhandler rhandler)
+
+    static member inline Compose(lhandler: HttpHandler, SwaggerHttpHandler (rmetadata, rhandler)) : SwaggerHttpHandler =
+      SwaggerHttpHandler(rmetadata, Giraffe.Core.compose lhandler rhandler)
+
+    static member inline Compose(lhandler: HttpHandler, rhandler: HttpHandler) : SwaggerHttpHandler =
+      SwaggerHttpHandler([], Giraffe.Core.compose lhandler rhandler)

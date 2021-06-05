@@ -16,8 +16,6 @@ open Fake.IO.Globbing.Operators
 open Fake.Core.TargetOperators
 open Fake.Api
 open Fake.BuildServer
-open Fantomas
-open Fantomas.FakeHelpers
 
 BuildServer.install [
     GitHubActions.Installer
@@ -48,10 +46,12 @@ let sln = "Giraffe.EndpointRouting.OpenAPI.sln"
 let srcCodeGlob =
     !! (__SOURCE_DIRECTORY__  @@ "src/**/*.fs")
     ++ (__SOURCE_DIRECTORY__  @@ "src/**/*.fsx")
+    -- "**/obj/**/*.fs"
 
 let testsCodeGlob =
     !! (__SOURCE_DIRECTORY__  @@ "tests/**/*.fs")
     ++ (__SOURCE_DIRECTORY__  @@ "tests/**/*.fsx")
+    -- "**/obj/**/*.fs"
 
 let srcGlob =__SOURCE_DIRECTORY__  @@ "src/**/*.??proj"
 let testsGlob = __SOURCE_DIRECTORY__  @@ "tests/**/*.??proj"
@@ -227,6 +227,9 @@ module dotnet =
 
     let fsharpAnalyzer optionConfig args =
         tool optionConfig "fsharp-analyzers" args
+
+    let fantomas optionConfig args =
+        tool optionConfig "fantomas" args
 
 module FSharpAnalyzers =
     type Arguments =
@@ -565,16 +568,20 @@ let formatCode _ =
         testsCodeGlob
     ]
     |> Seq.collect id
-    |> formatFilesAsync FormatConfig.FormatConfig.Default
-    |> Async.RunSynchronously
-    |> Seq.iter(fun result ->
-        match result with
-        | Formatted(original, tempfile) ->
-            tempfile |> Shell.copyFile original
-            Trace.logfn "Formatted %s" original
-        | _ -> ()
-    )
+    |> Seq.map (sprintf "\"%s\"")
+    |> String.concat " "
+    |> dotnet.fantomas id
 
+let checkFormat _ =
+    [
+        srcCodeGlob
+        testsCodeGlob
+    ]
+    |> Seq.collect id
+    |> Seq.map (sprintf "\"%s\"")
+    |> String.concat " "
+    |> sprintf "%s --check"
+    |> dotnet.fantomas id
 
 let buildDocs _ =
     DocsTool.build ()
@@ -613,6 +620,7 @@ Target.create "PublishToNuGet" publishToNuget
 Target.create "GitRelease" gitRelease
 Target.create "GitHubRelease" githubRelease
 Target.create "FormatCode" formatCode
+Target.create "CheckFormat" checkFormat
 Target.create "Release" ignore
 Target.create "BuildDocs" buildDocs
 Target.create "WatchDocs" watchDocs
@@ -640,6 +648,7 @@ Target.create "ReleaseDocs" releaseDocs
 
 
 "DotnetRestore"
+    ==> "CheckFormat"
     ==> "DotnetBuild"
     ==> "FSharpAnalyzers"
     ==> "DotnetTest"

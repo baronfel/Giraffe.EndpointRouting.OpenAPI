@@ -35,18 +35,18 @@ module Extensions =
       ) =
       endpoints.MapGet(
         route,
-        RequestDelegate
-          (fun ctx ->
-            unitTask {
-              let builder = ctx.GetService<OpenApiDocumentBuilder>()
-              ctx.SetContentType("application/json")
+        RequestDelegate(fun ctx ->
+          unitTask {
+            let builder = ctx.GetService<OpenApiDocumentBuilder>()
+            ctx.SetContentType("application/json")
 
-              use response = ctx.Response.Body
-              use textWriter = new System.IO.StreamWriter(response)
+            use response = ctx.Response.Body
+            use textWriter = new System.IO.StreamWriter(response)
 
-              let writer =
-                Microsoft.OpenApi.Writers.OpenApiJsonWriter(textWriter :> System.IO.TextWriter)
+            let writer =
+              Microsoft.OpenApi.Writers.OpenApiJsonWriter(textWriter :> System.IO.TextWriter)
 
-              builder.CreateDocument().SerializeAsV3(writer)
-            })
+            builder.CreateDocument().SerializeAsV3(writer)
+          }
+        )
       )
