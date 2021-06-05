@@ -110,12 +110,11 @@ module Metadata =
       )
 
     type OpenApiDocumentBuilder(options: OpenApiDocumentOptions, endpoints: Microsoft.AspNetCore.Routing.EndpointDataSource) =
-      member _.CreateDocument() : Microsoft.OpenApi.Models.OpenApiDocument =
+      member _.CreateDocument() : OpenApiDocument =
         let endpoints = endpoints.Endpoints
         let paths = processEndpoints endpoints
 
-        let document =
-          new Microsoft.OpenApi.Models.OpenApiDocument()
+        let document = new OpenApiDocument()
 
         document.Paths <- paths
         document

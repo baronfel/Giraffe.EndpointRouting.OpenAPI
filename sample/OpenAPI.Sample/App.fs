@@ -11,17 +11,12 @@ module Diagnostics =
   let private renderEndpoints : HttpHandler =
     fun next ctx ->
       task {
-        let source =
-          ctx.GetService<EndpointDataSource>()
+        let source = ctx.GetService<EndpointDataSource>()
 
         let endpoints = source.Endpoints
 
         let headerRow =
-          [ "Order"
-            "Pattern"
-            "Methods"
-            "Metadata" ]
-          |> List.map (fun h -> th [] [ str h ])
+          [ "Order"; "Pattern"; "Methods"; "Metadata" ] |> List.map (fun h -> th [] [ str h ])
 
         let renderRow (endpoint: Microsoft.AspNetCore.Http.Endpoint) =
           let re = endpoint :?> RouteEndpoint
@@ -66,6 +61,5 @@ module App =
     [ GET [ route "/hello" (operationId "sayHello" >=> text "Hello, world") ]
       POST [ route
                "/yellHello"
-               (operationId "yellHello"
-                >=> (bindJson (fun (payload: {| name: string |}) -> text payload.name))) ]
+               (operationId "yellHello" >=> (bindJson (fun (payload: {| name: string |}) -> text payload.name))) ]
       yield! Diagnostics.routes ]

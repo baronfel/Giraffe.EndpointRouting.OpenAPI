@@ -10,19 +10,19 @@ module Combinators =
     (endpoint, metadata) ||> List.fold (fun e m -> addMetadata m e)
 
   type Router =
-    static member inline Route(path, SwaggerHttpHandler (metadata, handler)) : Endpoint =
+    static member inline Route(path, OpenAPIHttpHandler (metadata, handler)) : Endpoint =
       Giraffe.EndpointRouting.Routers.route path handler |> applyMetadatas metadata
 
     static member inline Route(path, handler) : Endpoint =
       Giraffe.EndpointRouting.Routers.route path handler
 
-    static member ApplyBefore(SwaggerHttpHandler (metadata, handler), endpoint) : Endpoint =
+    static member ApplyBefore(OpenAPIHttpHandler (metadata, handler), endpoint) : Endpoint =
       Giraffe.EndpointRouting.Routers.applyBefore handler endpoint |> applyMetadatas metadata
 
     static member ApplyBefore(handler, endpoint) : Endpoint =
       Giraffe.EndpointRouting.Routers.applyBefore handler endpoint
 
-    static member ApplyAfter(SwaggerHttpHandler (metadata, handler), endpoint) : Endpoint =
+    static member ApplyAfter(OpenAPIHttpHandler (metadata, handler), endpoint) : Endpoint =
       Giraffe.EndpointRouting.Routers.applyAfter handler endpoint |> applyMetadatas metadata
 
     static member ApplyAfter(handler, endpoint) : Endpoint =
