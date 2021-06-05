@@ -27,19 +27,19 @@ module Metadata =
       class
       end
 
-    let tryGetOperationId (e: Microsoft.AspNetCore.Http.Endpoint) operationType =
+    let getRoutePattern (e: Microsoft.AspNetCore.Http.Endpoint) =
+      let route = (e :?> RouteEndpoint)
+      route.RoutePattern.RawText
+
+    let generateOperationId (e: Microsoft.AspNetCore.Http.Endpoint) =
       match e.Metadata.GetMetadata<OperationIdMetadata>()
             |> Option.ofObj with
       | Some op -> op.Id
-      | None ->
-          let route = (e :?> RouteEndpoint)
-          let pattern = route.RoutePattern.RawText
-          $"{pattern}_%A{operationType}"
+      | None -> getRoutePattern e
 
-
-    let generateOperation (e: Microsoft.AspNetCore.Http.Endpoint) (method: OperationType) =
+    let generateOperation (e: Microsoft.AspNetCore.Http.Endpoint) =
       let op = OpenApiOperation()
-      let operationId = tryGetOperationId e method
+      let operationId = generateOperationId e
 
       e.Metadata.GetOrderedMetadata<OperationParameter>()
       |> Option.ofObj
@@ -68,49 +68,45 @@ module Metadata =
 
     /// creates an OpenAPI document from a collection of application endpoints by parsing endpoint
     /// metadata
-    let createPathItem (endpoint: Microsoft.AspNetCore.Http.Endpoint) : OpenApiPathItem =
-      let pathItem = OpenApiPathItem()
+    let addEndpointToPath (route, pathItem: OpenApiPathItem) (endpoint: Microsoft.AspNetCore.Http.Endpoint) : OpenApiPathItem =
 
-      let methods =
+      // generate the method for only the supported method types
+      let operation = generateOperation endpoint
+
+      let httpMethods =
         endpoint.Metadata.GetOrderedMetadata<Microsoft.AspNetCore.Routing.HttpMethodMetadata>()
         |> Option.ofObj
         |> Option.map (fun l -> l :> seq<_>)
         |> Option.defaultValue Seq.empty
         |> Seq.collect (fun m -> m.HttpMethods)
         |> Seq.distinct
-        |> Seq.toList
-        |> function
-        | [] ->
-            OperationType.GetValues()
-            |> Array.iter
-                 (fun method ->
-                   let operation = generateOperation endpoint method
-                   pathItem.AddOperation(method, operation))
-        | methods ->
-            let operationTypes =
-              methods
-              |> List.toArray
-              |> Array.map methodToOperationType
+        |> Seq.toArray
+        |> function | [||] -> OperationType.GetValues<OperationType>()
+                    | ms -> ms |> Array.map methodToOperationType
 
-            operationTypes
-            |> Array.iter
-                 (fun method ->
-                   let operation = generateOperation endpoint method
-                   pathItem.AddOperation(method, operation))
+      httpMethods
+      |> Array.iter
+           (fun method ->
+             match pathItem.Operations.TryGetValue method with
+             | true, _existing -> System.Diagnostics.Trace.TraceWarning($"Method {method} of path {route} attempted to add a duplicate endpoint. The new endpoint was skipped.")
+             | false, _ -> pathItem.AddOperation(method, operation))
 
       pathItem
 
     let private processEndpoints (endpoints: Microsoft.AspNetCore.Http.Endpoint seq) : OpenApiPaths =
       let paths = new OpenApiPaths()
-
-      for endpoint in endpoints do
-        let re = endpoint :?> RouteEndpoint
-        let path = createPathItem endpoint
-        // TODO: cannot add same route with different method here,
-        //       need to lookup existing path and merge path items
-        paths.Add(re.RoutePattern.RawText, path)
-
-      paths
+      (paths, endpoints)
+      ||> Seq.fold (fun paths endpoint ->
+        let pathId = getRoutePattern endpoint
+        match paths.TryGetValue pathId with
+        | true, path ->
+          addEndpointToPath (pathId, path) endpoint |> ignore<OpenApiPathItem>
+        | false, _ ->
+          let path = new OpenApiPathItem()
+          paths.Add(pathId, path)
+          addEndpointToPath (pathId, path) endpoint |> ignore<OpenApiPathItem>
+        paths
+      )
 
     type OpenApiDocumentBuilder
       (
