@@ -32,8 +32,7 @@ module Metadata =
       route.RoutePattern.RawText
 
     let generateOperationId (e: Microsoft.AspNetCore.Http.Endpoint) =
-      match e.Metadata.GetMetadata<OperationIdMetadata>()
-            |> Option.ofObj with
+      match e.Metadata.GetMetadata<OperationIdMetadata>() |> Option.ofObj with
       | Some op -> op.Id
       | None -> getRoutePattern e
 
@@ -46,16 +45,14 @@ module Metadata =
       |> Option.toList
       |> Seq.collect id
       |> Seq.distinct
-      |> Seq.iteri
-           (fun index (parameter: OperationParameter) ->
-             let openApiParameter = OpenApiParameter()
-             openApiParameter.Name <- string index
+      |> Seq.iteri (fun index (parameter: OperationParameter) ->
+        let openApiParameter = OpenApiParameter()
+        openApiParameter.Name <- string index
 
-             openApiParameter.Required <-
-               parameter.Type.GetGenericTypeDefinition()
-               <> typedefof<_ option>
-             // openApiParameter.Schema <- calculateSchema parameter.Type
-             op.Parameters.Add(openApiParameter))
+        openApiParameter.Required <- parameter.Type.GetGenericTypeDefinition() <> typedefof<_ option>
+        // openApiParameter.Schema <- calculateSchema parameter.Type
+        op.Parameters.Add(openApiParameter)
+      )
 
       op.OperationId <- operationId
       op
@@ -81,38 +78,38 @@ module Metadata =
         |> Seq.collect (fun m -> m.HttpMethods)
         |> Seq.distinct
         |> Seq.toArray
-        |> function | [||] -> OperationType.GetValues<OperationType>()
-                    | ms -> ms |> Array.map methodToOperationType
+        |> function
+          | [||] -> OperationType.GetValues<OperationType>()
+          | ms -> ms |> Array.map methodToOperationType
 
       httpMethods
-      |> Array.iter
-           (fun method ->
-             match pathItem.Operations.TryGetValue method with
-             | true, _existing -> System.Diagnostics.Trace.TraceWarning($"Method {method} of path {route} attempted to add a duplicate endpoint. The new endpoint was skipped.")
-             | false, _ -> pathItem.AddOperation(method, operation))
+      |> Array.iter (fun method ->
+        match pathItem.Operations.TryGetValue method with
+        | true, _existing ->
+          System.Diagnostics.Trace.TraceWarning($"Method {method} of path {route} attempted to add a duplicate endpoint. The new endpoint was skipped.")
+        | false, _ -> pathItem.AddOperation(method, operation)
+      )
 
       pathItem
 
     let private processEndpoints (endpoints: Microsoft.AspNetCore.Http.Endpoint seq) : OpenApiPaths =
       let paths = new OpenApiPaths()
+
       (paths, endpoints)
       ||> Seq.fold (fun paths endpoint ->
         let pathId = getRoutePattern endpoint
+
         match paths.TryGetValue pathId with
-        | true, path ->
-          addEndpointToPath (pathId, path) endpoint |> ignore<OpenApiPathItem>
+        | true, path -> addEndpointToPath (pathId, path) endpoint |> ignore<OpenApiPathItem>
         | false, _ ->
           let path = new OpenApiPathItem()
           paths.Add(pathId, path)
           addEndpointToPath (pathId, path) endpoint |> ignore<OpenApiPathItem>
+
         paths
       )
 
-    type OpenApiDocumentBuilder
-      (
-        options: OpenApiDocumentOptions,
-        endpoints: Microsoft.AspNetCore.Routing.EndpointDataSource
-      ) =
+    type OpenApiDocumentBuilder(options: OpenApiDocumentOptions, endpoints: Microsoft.AspNetCore.Routing.EndpointDataSource) =
       member _.CreateDocument() : Microsoft.OpenApi.Models.OpenApiDocument =
         let endpoints = endpoints.Endpoints
         let paths = processEndpoints endpoints

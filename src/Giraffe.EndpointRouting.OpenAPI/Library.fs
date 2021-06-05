@@ -28,8 +28,10 @@ module PublicApi =
     call (Unchecked.defaultof<Router>, handler, Unchecked.defaultof<Endpoint>, endpoint)
 
   let inline applyAfter (handler: ^h) endpoint =
-      let inline call (_mthd: 'M, handler: 'H, dummy: 'D, endpoint: 'R) = ((^M or ^R or ^D or ^H) : (static member ApplyAfter: ^H * ^R -> ^R) handler, endpoint)
-      call (Unchecked.defaultof<Router>, handler, Unchecked.defaultof<Endpoint>, endpoint)
+    let inline call (_mthd: 'M, handler: 'H, dummy: 'D, endpoint: 'R) =
+      ((^M or ^R or ^D or ^H): (static member ApplyAfter : ^H * ^R -> ^R) handler, endpoint)
+
+    call (Unchecked.defaultof<Router>, handler, Unchecked.defaultof<Endpoint>, endpoint)
 
   /// assigns an operation id to this handler
   let operationId id =

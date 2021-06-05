@@ -2,11 +2,11 @@ source https://www.nuget.org/api/v2
 source https://api.nuget.org/v3/index.json
 storage: none
 nuget FSharp.Core 5.0
-nuget Microsoft.SourceLink.GitHub 1.0.0 copy_local: true
+nuget Microsoft.SourceLink.GitHub 1.0.0 copy_local: false
 nuget Expecto 9.0.2
 nuget YoloDev.Expecto.TestSdk 0.11.1
 nuget Microsoft.NET.Test.Sdk 16.8.0
-nuget altcover ~> 7
+nuget altcover ~> 7 copy_local: false
 nuget Giraffe
 nuget Giraffe.ViewEngine
 nuget Microsoft.OpenApi
@@ -28,7 +28,6 @@ group Build
     nuget Fake.DotNet.Paket 5.20.4-alpha.1642
     nuget Fake.Api.GitHub 5.20.4-alpha.1642
     nuget Fake.BuildServer.GitHubActions 5.20.4-alpha.1642
-    nuget Fantomas 3.2
     nuget Argu
     nuget Octokit 0.48
 

@@ -4,5 +4,9 @@
     "FSharp.enableAnalyzers": true,
     "FSharp.analyzersPath": [
         "./packages/analyzers"
-    ]
+    ],
+    "[fsharp]": {
+        "editor.useTabStops": false,
+        "editor.formatOnSave": true
+    }
 }
