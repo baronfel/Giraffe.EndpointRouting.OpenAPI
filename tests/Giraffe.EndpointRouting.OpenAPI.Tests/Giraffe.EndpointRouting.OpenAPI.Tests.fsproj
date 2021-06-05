@@ -5,12 +5,12 @@
         <TargetFramework>net5.0</TargetFramework>
         <GenerateProgramFile>false</GenerateProgramFile>
         <IsPackable>false</IsPackable>
+        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="../../src/Giraffe.EndpointRouting.OpenAPI/Giraffe.EndpointRouting.OpenAPI.fsproj" />
     </ItemGroup>
         <ItemGroup>
-        <Compile Include="AssemblyInfo.fs" />
         <Compile Include="Tests.fs" />
         <Compile Include="Main.fs" />
     </ItemGroup>
