@@ -37,6 +37,7 @@ module Extensions =
         route,
         RequestDelegate(fun ctx ->
           unitTask {
+            printfn "Hello world"
             let builder = ctx.GetService<OpenApiDocumentBuilder>()
             ctx.SetContentType("application/json")
 
@@ -45,7 +46,6 @@ module Extensions =
 
             let writer =
               Microsoft.OpenApi.Writers.OpenApiJsonWriter(textWriter :> System.IO.TextWriter)
-
             builder.CreateDocument().SerializeAsV3(writer)
           }
         )
