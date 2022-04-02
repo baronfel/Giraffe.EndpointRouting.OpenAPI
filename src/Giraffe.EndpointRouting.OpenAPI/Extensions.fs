@@ -45,7 +45,6 @@ module Extensions =
 
             let writer =
               Microsoft.OpenApi.Writers.OpenApiJsonWriter(textWriter :> System.IO.TextWriter)
-
             builder.CreateDocument().SerializeAsV3(writer)
           }
         )
