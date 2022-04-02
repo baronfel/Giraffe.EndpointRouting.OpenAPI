@@ -37,7 +37,6 @@ module Extensions =
         route,
         RequestDelegate(fun ctx ->
           unitTask {
-            printfn "Hello world"
             let builder = ctx.GetService<OpenApiDocumentBuilder>()
             ctx.SetContentType("application/json")
 
